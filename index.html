@@ -289,11 +289,10 @@
     <button class="ctrl-btn" id="ctrl-left" title="Left">◀</button>
     <button class="ctrl-btn" id="ctrl-rotate" title="Rotate">↻</button>
     <button class="ctrl-btn" id="ctrl-right" title="Right">▶</button>
-    <button class="ctrl-btn" id="ctrl-soft" title="Soft drop">▼</button>
     <button class="ctrl-btn" id="ctrl-drop" title="Hard drop">DROP</button>
   </div>
 
-  <div id="kb-hint">← → MOVE · ↑ ROTATE · ↓ SOFT DROP · SPACE HARD DROP · C HOLD</div>
+  <div id="kb-hint">← → MOVE · ↑ ROTATE · SPACE HARD DROP · C HOLD</div>
 </div>
 
 <script>
@@ -350,12 +349,47 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlaySub = document.getElementById('overlay-sub');
 const startBtn = document.getElementById('start-btn');
 
-// ─── Init ─────────────────────────────────────────────────────
+// ─── Persistence ──────────────────────────────────────────────
 function loadBest() { return parseInt(localStorage.getItem('blockade_best') || '0'); }
 function saveBest(v) { localStorage.setItem('blockade_best', v); }
 
+function saveState() {
+  if (!running) return;
+  const s = { board, pieceType, pieceRot, pieceX, pieceY, nextType, holdType, holdUsed, score, lines, level, bag, bagIdx };
+  localStorage.setItem('blockade_state', JSON.stringify(s));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('blockade_state');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    board = s.board; pieceType = s.pieceType; pieceRot = s.pieceRot;
+    pieceX = s.pieceX; pieceY = s.pieceY; nextType = s.nextType;
+    holdType = s.holdType; holdUsed = s.holdUsed;
+    score = s.score; lines = s.lines; level = s.level;
+    bag = s.bag; bagIdx = s.bagIdx;
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearState() { localStorage.removeItem('blockade_state'); }
+
+// ─── Init ─────────────────────────────────────────────────────
 best = loadBest();
 bestEl.textContent = best;
+
+// Show resume button if saved game exists
+if (localStorage.getItem('blockade_state')) {
+  startBtn.textContent = 'RESUME';
+  overlaySub.innerHTML = 'A game is in progress.<br>Resume or start fresh?';
+  const newBtn = document.createElement('button');
+  newBtn.className = 'btn';
+  newBtn.textContent = 'NEW GAME';
+  newBtn.style.background = '#444';
+  newBtn.addEventListener('click', () => { clearState(); initGame(); running = true; paused = false; overlay.classList.add('hidden'); updateHUD(); startLoop(); draw(); });
+  startBtn.parentNode.insertBefore(newBtn, startBtn.nextSibling);
+}
 
 function initGame() {
   board = Array.from({length:ROWS}, ()=>Array(COLS).fill(null));
@@ -459,6 +493,7 @@ function lock() {
   }
   clearLines();
   spawnPiece();
+  saveState();
 }
 
 function clearLines() {
@@ -598,9 +633,10 @@ function startLoop() {
 // ─── Start / Game over ────────────────────────────────────────
 function startGame() {
   cancelAnimationFrame(rafId);
-  initGame();
+  if (!loadState()) initGame();
   running = true; paused = false;
   overlay.classList.add('hidden');
+  updateHUD();
   startLoop();
   draw();
 }
@@ -608,6 +644,7 @@ function startGame() {
 function gameOver() {
   running = false;
   cancelAnimationFrame(rafId);
+  clearState();
   best = loadBest();
   bestEl.textContent = best;
   overlayTitle.textContent = 'GAME OVER';
@@ -626,7 +663,6 @@ document.addEventListener('keydown', e => {
     case 'ArrowLeft':  e.preventDefault(); moveLeft(); break;
     case 'ArrowRight': e.preventDefault(); moveRight(); break;
     case 'ArrowUp':    e.preventDefault(); rotate(); break;
-    case 'ArrowDown':  e.preventDefault(); softDrop(); break;
     case ' ':          e.preventDefault(); hardDrop(); break;
     case 'c': case 'C': holdPiece(); break;
     case 'p': case 'P': togglePause(); break;
@@ -649,7 +685,6 @@ function addTouch(id, fn) {
 addTouch('ctrl-left', moveLeft);
 addTouch('ctrl-right', moveRight);
 addTouch('ctrl-rotate', rotate);
-addTouch('ctrl-soft', softDrop);
 addTouch('ctrl-drop', hardDrop);
 addTouch('ctrl-hold', holdPiece);
 
