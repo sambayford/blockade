@@ -191,21 +191,27 @@
   /* Touch controls */
   #touch-bar {
     display: flex;
+    flex-direction: column;
     gap: 8px;
     width: 100%;
     padding: 8px 2px 4px;
+  }
+
+  .ctrl-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
     justify-content: center;
   }
 
   .ctrl-btn {
     flex: 1;
-    max-width: 70px;
-    height: 48px;
+    height: 64px;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text);
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     cursor: pointer;
     transition: background 0.1s, transform 0.08s;
     display: flex;
@@ -220,7 +226,11 @@
     transform: scale(0.94);
   }
 
-  #ctrl-drop { max-width: 120px; font-size: 0.75rem; font-family: 'Space Mono', monospace; letter-spacing: 0.06em; }
+  #ctrl-drop, #ctrl-hold {
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em;
+  }
 
   /* Lines cleared flash */
   @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.2} }
@@ -285,11 +295,15 @@
 
   <!-- Touch controls -->
   <div id="touch-bar">
-    <button class="ctrl-btn" id="ctrl-hold" title="Hold (C)">📦</button>
-    <button class="ctrl-btn" id="ctrl-left" title="Left">◀</button>
-    <button class="ctrl-btn" id="ctrl-rotate" title="Rotate">↻</button>
-    <button class="ctrl-btn" id="ctrl-right" title="Right">▶</button>
-    <button class="ctrl-btn" id="ctrl-drop" title="Hard drop">DROP</button>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="ctrl-left" title="Left">◀</button>
+      <button class="ctrl-btn" id="ctrl-rotate" title="Rotate">↻</button>
+      <button class="ctrl-btn" id="ctrl-right" title="Right">▶</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="ctrl-hold" title="Hold (C)">HOLD</button>
+      <button class="ctrl-btn" id="ctrl-drop" title="Hard drop">DROP</button>
+    </div>
   </div>
 
   <div id="kb-hint">← → MOVE · ↑ ROTATE · SPACE HARD DROP · C HOLD</div>
