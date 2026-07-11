@@ -346,6 +346,7 @@ let nextType, holdType, holdUsed;
 let score, lines, level, best;
 let running, paused, dropTimer, lastTime;
 let bag, bagIdx;
+let hiddenWhilePlaying = false, bgPauseActive = false;
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -668,7 +669,18 @@ function gameOver() {
   draw();
 }
 
-startBtn.addEventListener('click', startGame);
+startBtn.addEventListener('click', () => {
+  if (bgPauseActive) {
+    bgPauseActive = false;
+    paused = false;
+    overlay.classList.add('hidden');
+    lastTime = 0;
+    startLoop();
+    draw();
+    return;
+  }
+  startGame();
+});
 
 // ─── Keyboard ─────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
@@ -689,6 +701,28 @@ function togglePause() {
   paused = !paused;
   if (!paused) { lastTime = 0; startLoop(); }
 }
+
+// ─── Background pause ─────────────────────────────────────────
+function showResumeOverlay() {
+  bgPauseActive = true;
+  overlayTitle.textContent = 'PAUSED';
+  overlaySub.innerHTML = `Score: <strong>${score}</strong><br>Lines: ${lines} · Level: ${level}`;
+  startBtn.textContent = 'RESUME';
+  overlay.classList.remove('hidden');
+  draw();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (running) {
+      if (!paused) { paused = true; saveState(); }
+      hiddenWhilePlaying = true;
+    }
+  } else if (hiddenWhilePlaying) {
+    hiddenWhilePlaying = false;
+    showResumeOverlay();
+  }
+});
 
 // ─── Touch controls ───────────────────────────────────────────
 function addTouch(id, fn) {
